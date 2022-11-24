@@ -59,7 +59,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         ));
 
         stmts.push(quote!(
-            core.NVIC.set_priority(
+            core.CLIC.set_priority(
                 #rt_err::#interrupt::#name,
                 rtic::export::logical2hw(#priority, #nvic_prio_bits),
             );
@@ -67,7 +67,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
-        stmts.push(quote!(rtic::export::NVIC::unmask(#rt_err::#interrupt::#name);));
+        stmts.push(quote!(rtic::export::CLIC::unmask(#rt_err::#interrupt::#name);));
     }
 
     // Set exception priorities

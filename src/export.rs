@@ -1,16 +1,16 @@
 #![allow(clippy::inline_always)]
 use core::{
     cell::Cell,
-    sync::atomic::{AtomicBool, Ordering},
+    //sync::atomic::{AtomicBool, Ordering},
 };
 
 pub use crate::tq::{NotReady, TimerQueue};
 pub use bare_metal::CriticalSection;
-pub use cortex_m::{
+pub use riscv_clic::{
     asm::nop,
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, NVIC, SCB, SYST},
+    peripheral::{scb::SystemHandler, DWT, CLIC, SCB, SYST},
     Peripherals,
 };
 pub use heapless::sorted_linked_list::SortedLinkedList;
@@ -82,7 +82,7 @@ where
 {
     f();
 }
-
+/*
 pub struct Barrier {
     inner: AtomicBool,
 }
@@ -97,13 +97,14 @@ impl Barrier {
     pub fn release(&self) {
         self.inner.store(true, Ordering::Release);
     }
-
+    
     pub fn wait(&self) {
         while !self.inner.load(Ordering::Acquire) {
             core::hint::spin_loop()
         }
     }
 }
+*/
 
 // Newtype over `Cell` that forbids mutation through a shared reference
 pub struct Priority {

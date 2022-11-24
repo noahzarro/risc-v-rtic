@@ -38,7 +38,8 @@
 //deny_warnings_placeholder_for_ci
 #![allow(clippy::inline_always)]
 
-use cortex_m::{interrupt::InterruptNumber, peripheral::NVIC};
+use riscv_clic::{peripheral::CLIC};
+use riscv_clic::{interrupt::InterruptNumber};
 pub use cortex_m_rtic_macros::app;
 pub use rtic_core::{prelude as mutex_prelude, Exclusive, Mutex};
 pub use rtic_monotonic::{self, Monotonic};
