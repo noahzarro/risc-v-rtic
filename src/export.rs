@@ -10,7 +10,9 @@ pub use riscv_clic::{
     asm::nop,
     asm::wfi,
     interrupt,
-    peripheral::{scb::SystemHandler, DWT, CLIC, SCB, SYST},
+    peripheral::CLIC,
+    // TODO: Later add this imports again
+    // peripheral::{scb::SystemHandler, DWT, CLIC, SCB, SYST},
     Peripherals,
 };
 pub use heapless::sorted_linked_list::SortedLinkedList;
@@ -55,7 +57,7 @@ impl<const M: usize> Mask<M> {
 }
 
 #[cfg(have_basepri)]
-use cortex_m::register::basepri;
+use riscv_clic::register::mintthresh;
 
 #[cfg(have_basepri)]
 #[inline(always)]
@@ -63,14 +65,16 @@ pub fn run<F>(priority: u8, f: F)
 where
     F: FnOnce(),
 {
+
     if priority == 1 {
         // If the priority of this interrupt is `1` then BASEPRI can only be `0`
         f();
-        unsafe { basepri::write(0) }
+        // TODO: check what this does
+        mintthresh::write(mintthresh::Mintthresh::new(0));
     } else {
-        let initial = basepri::read();
+        let initial = mintthresh::read();
         f();
-        unsafe { basepri::write(initial) }
+        mintthresh::write(initial)
     }
 }
 
@@ -221,14 +225,15 @@ pub unsafe fn lock<T, R, const M: usize>(
     if current < ceiling {
         if ceiling == (1 << nvic_prio_bits) {
             priority.set(u8::max_value());
-            let r = interrupt::free(|_| f(&mut *ptr));
+            let r = interrupt::free(|| f(&mut *ptr));
             priority.set(current);
             r
         } else {
+            // TODO: fix interrupt priorities
             priority.set(ceiling);
-            basepri::write(logical2hw(ceiling, nvic_prio_bits));
+            mintthresh::write(mintthresh::Mintthresh::new(logical2hw(ceiling, nvic_prio_bits).into()));
             let r = f(&mut *ptr);
-            basepri::write(logical2hw(current, nvic_prio_bits));
+            mintthresh::write(mintthresh::Mintthresh::new(logical2hw(current, nvic_prio_bits).into()));
             priority.set(current);
             r
         }

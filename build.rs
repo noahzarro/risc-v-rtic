@@ -11,6 +11,7 @@ fn main() {
     if target.starts_with("thumbv7m")
         | target.starts_with("thumbv7em")
         | target.starts_with("thumbv8m.main")
+        | target.starts_with("riscv")
     {
         println!("cargo:rustc-cfg=have_basepri");
 

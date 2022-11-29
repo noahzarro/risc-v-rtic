@@ -63,7 +63,7 @@ pub fn pend<I>(interrupt: I)
 where
     I: InterruptNumber,
 {
-    NVIC::pend(interrupt);
+    CLIC::pend(interrupt);
 }
 
 use core::cell::UnsafeCell;
