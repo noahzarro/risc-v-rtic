@@ -29,7 +29,15 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
     ));
 
     let device = &extra.device;
-    let nvic_prio_bits = quote!(#device::NVIC_PRIO_BITS);
+    let clic_prio_bits = quote!(#device::CLIC_PRIO_BITS);
+
+    // Set number of bits used for interrupt level
+    stmts.push(quote!(unsafe { core.CLIC.set_level_bit_width(#device::CLIC_PRIO_BITS.into()) }));
+
+    // Set interrupt threshold to 0
+    stmts.push(quote!(let mut mintthresh_reg = rtic::export::register::mintthresh::read();));
+    stmts.push(quote!(mintthresh_reg.set_thresh(0);));
+    stmts.push(quote!(rtic::export::register::mintthresh::write(mintthresh_reg);));
 
     // check that all dispatchers exists in the `Interrupt` enumeration regardless of whether
     // they are used or not
@@ -40,7 +48,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
     let interrupt_ids = analysis.interrupts.iter().map(|(p, (id, _))| (p, id));
 
-    // Unmask interrupts and set their priorities
+    // Unmask interrupts, set triggers, enable shv and set their priorities
     for (&priority, name) in interrupt_ids.chain(app.hardware_tasks.values().filter_map(|task| {
         if util::is_exception(&task.args.binds) {
             // We do exceptions in another pass
@@ -55,15 +63,25 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+            const _: () =  if (1 << #clic_prio_bits) < #priority as usize { ::core::panic!(#es); };
         ));
 
+        // Set priority
         stmts.push(quote!(
             core.CLIC.set_priority(
                 #rt_err::#interrupt::#name,
-                rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                rtic::export::logical2hw(#priority, #clic_prio_bits),
             );
         ));
+
+        // Enable hardware enabled vectoring
+        stmts.push(quote!(core.CLIC.enable_shv(#rt_err::#interrupt::#name);));
+
+        // Set triggerto edge positive
+        stmts.push(quote!(core.CLIC.set_trig(
+            #rt_err::#interrupt::#name,
+            rtic::export::peripheral::clic::Trigger::EdgePositive,
+        );));
 
         // NOTE unmask the interrupt *after* setting its priority: changing the priority of a pended
         // interrupt is implementation defined
@@ -84,12 +102,12 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+            const _: () =  if (1 << #clic_prio_bits) < #priority as usize { ::core::panic!(#es); };
         ));
 
         stmts.push(quote!(core.SCB.set_priority(
             rtic::export::SystemHandler::#name,
-            rtic::export::logical2hw(#priority, #nvic_prio_bits),
+            rtic::export::logical2hw(#priority, #clic_prio_bits),
         );));
     }
 
@@ -98,7 +116,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let priority = if let Some(prio) = monotonic.args.priority {
             quote! { #prio }
         } else {
-            quote! { (1 << #nvic_prio_bits) }
+            quote! { (1 << #clic_prio_bits) }
         };
         let binds = &monotonic.args.binds;
 
@@ -109,7 +127,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () =  if (1 << #nvic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+            const _: () =  if (1 << #clic_prio_bits) < #priority as usize { ::core::panic!(#es); };
         ));
 
         let mono_type = &monotonic.ty;
@@ -118,7 +136,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             stmts.push(quote!(
                 core.SCB.set_priority(
                     rtic::export::SystemHandler::SysTick,
-                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                    rtic::export::logical2hw(#priority, #clic_prio_bits),
                 );
 
                 // Always enable monotonic interrupts if they should never be off
@@ -131,7 +149,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             stmts.push(quote!(
                 core.NVIC.set_priority(
                     #rt_err::#interrupt::#binds,
-                    rtic::export::logical2hw(#priority, #nvic_prio_bits),
+                    rtic::export::logical2hw(#priority, #clic_prio_bits),
                 );
 
                 // Always enable monotonic interrupts if they should never be off

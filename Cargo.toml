@@ -26,7 +26,9 @@ rtic-monotonic = "1.0.0"
 rtic-core = "1.0.0"
 heapless = "0.7.7"
 bare-metal = "1.0.0"
-riscv_clic = { git = "https://github.com/noahzarro/riscv-clic.git", version = "0.10.0" }
+riscv-clic = { git = "https://github.com/noahzarro/riscv-clic.git", features=["critical-section-single-hart", "clic"]}
+riscv-rt = { git = "https://github.com/noahzarro/riscv-rt", branch = "pulp", features=["clic"]}
+riscv-rt-macros = { git = "https://github.com/noahzarro/riscv-rt", branch = "pulp" }
 
 [build-dependencies]
 version_check = "0.9"

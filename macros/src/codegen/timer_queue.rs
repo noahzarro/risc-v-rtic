@@ -118,7 +118,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                     quote!(
                         #(#cfgs)*
                         #t::#name => {
-                            rtic::export::interrupt::free(|_| (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index)));
+                            rtic::export::interrupt::free(|| (&mut *#rq.get_mut()).split().0.enqueue_unchecked((#rqt::#name, index)));
 
                             #pend
                         }
@@ -137,7 +137,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                 #[no_mangle]
                 #[allow(non_snake_case)]
                 unsafe fn #bound_interrupt() {
-                    while let Some((task, index)) = rtic::export::interrupt::free(|_|
+                    while let Some((task, index)) = rtic::export::interrupt::free(||
                         if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
                             (&mut *#tq.get_mut()).dequeue(|| #disable_isr, mono)
                         } else {
@@ -151,7 +151,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
                         }
                     }
 
-                    rtic::export::interrupt::free(|_| if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
+                    rtic::export::interrupt::free(|| if let Some(mono) = (&mut *#m_ident.get_mut()).as_mut() {
                         mono.on_interrupt();
                     });
                 }

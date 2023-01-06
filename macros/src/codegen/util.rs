@@ -52,7 +52,7 @@ pub fn impl_mutex(
                         #ptr,
                         #priority,
                         CEILING,
-                        #device::NVIC_PRIO_BITS,
+                        #device::CLIC_PRIO_BITS,
                         &#masks_name,
                         f,
                     )

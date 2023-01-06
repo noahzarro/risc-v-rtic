@@ -129,7 +129,7 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
 
                     /// Read the current time from this monotonic
                     pub fn now() -> <super::super::#name as rtic::Monotonic>::Instant {
-                        rtic::export::interrupt::free(|_| {
+                        rtic::export::interrupt::free(|| {
                             use rtic::Monotonic as _;
                             if let Some(m) = unsafe{ &mut *super::super::#ident.get_mut() } {
                                 m.now()
@@ -158,10 +158,13 @@ pub fn app(app: &App, analysis: &Analysis, extra: &Extra) -> TokenStream2 {
     let rt_err = util::rt_err_ident();
 
     quote!(
+        
         /// The RTIC application module
         pub mod #name {
             /// Always include the device crate which contains the vector table
             use #device as #rt_err;
+            
+            use riscv_rt::interrupt_handler;
 
             #monotonics
 

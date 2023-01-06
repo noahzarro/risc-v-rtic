@@ -229,14 +229,14 @@ pub fn codegen(
             let input = #tupled;
 
             unsafe {
-                if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
+                if let Some(index) = rtic::export::interrupt::free(|| (&mut *#fq.get_mut()).dequeue()) {
                     (&mut *#inputs
                         .get_mut())
                         .get_unchecked_mut(usize::from(index))
                         .as_mut_ptr()
                         .write(input);
 
-                    rtic::export::interrupt::free(|_| {
+                    rtic::export::interrupt::free(|| {
                         (&mut *#rq.get_mut()).enqueue_unchecked((#t::#name, index));
                     });
 
@@ -325,7 +325,7 @@ pub fn codegen(
                 #(#cfgs)*
                 impl #internal_spawn_handle_ident {
                     pub fn cancel(self) -> Result<#ty, ()> {
-                        rtic::export::interrupt::free(|_| unsafe {
+                        rtic::export::interrupt::free(|| unsafe {
                             let tq = &mut *#tq.get_mut();
                             if let Some((_task, index)) = tq.cancel_marker(self.marker) {
                                 // Get the message
@@ -356,7 +356,7 @@ pub fn codegen(
                         self,
                         instant: <#m as rtic::Monotonic>::Instant
                     ) -> Result<Self, ()> {
-                        rtic::export::interrupt::free(|_| unsafe {
+                        rtic::export::interrupt::free(|| unsafe {
                             let marker = #tq_marker.get().read();
                             #tq_marker.get_mut().write(marker.wrapping_add(1));
 
@@ -392,7 +392,7 @@ pub fn codegen(
                 ) -> Result<#name::#m::SpawnHandle, #ty> {
                     unsafe {
                         let input = #tupled;
-                        if let Some(index) = rtic::export::interrupt::free(|_| (&mut *#fq.get_mut()).dequeue()) {
+                        if let Some(index) = rtic::export::interrupt::free(|| (&mut *#fq.get_mut()).dequeue()) {
                             (&mut *#inputs
                                 .get_mut())
                                 .get_unchecked_mut(usize::from(index))
@@ -405,7 +405,7 @@ pub fn codegen(
                                 .as_mut_ptr()
                                 .write(instant);
 
-                            rtic::export::interrupt::free(|_| {
+                            rtic::export::interrupt::free(|| {
                                 let marker = #tq_marker.get().read();
                                 let nr = rtic::export::NotReady {
                                     instant,

@@ -10,6 +10,8 @@ pub use riscv_clic::{
     asm::nop,
     asm::wfi,
     interrupt,
+    register,
+    peripheral,
     peripheral::CLIC,
     // TODO: Later add this imports again
     // peripheral::{scb::SystemHandler, DWT, CLIC, SCB, SYST},
@@ -216,14 +218,14 @@ pub unsafe fn lock<T, R, const M: usize>(
     ptr: *mut T,
     priority: &Priority,
     ceiling: u8,
-    nvic_prio_bits: u8,
+    clic_prio_bits: u8,
     _mask: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
     let current = priority.get();
 
     if current < ceiling {
-        if ceiling == (1 << nvic_prio_bits) {
+        if ceiling == (1 << clic_prio_bits) {
             priority.set(u8::max_value());
             let r = interrupt::free(|| f(&mut *ptr));
             priority.set(current);
@@ -231,9 +233,9 @@ pub unsafe fn lock<T, R, const M: usize>(
         } else {
             // TODO: fix interrupt priorities
             priority.set(ceiling);
-            mintthresh::write(mintthresh::Mintthresh::new(logical2hw(ceiling, nvic_prio_bits).into()));
+            mintthresh::write(mintthresh::Mintthresh::new(logical2hw(ceiling, clic_prio_bits).into()));
             let r = f(&mut *ptr);
-            mintthresh::write(mintthresh::Mintthresh::new(logical2hw(current, nvic_prio_bits).into()));
+            mintthresh::write(mintthresh::Mintthresh::new(logical2hw(current, clic_prio_bits).into()));
             priority.set(current);
             r
         }
@@ -266,7 +268,7 @@ pub unsafe fn lock<T, R, const M: usize>(
 /// (Sub)-zero as:
 /// - Either zero OH (lock optimized out), or
 /// - Amounting to an optimal assembly implementation
-///   - if ceiling == (1 << nvic_prio_bits)
+///   - if ceiling == (1 << clic_prio_bits)
 ///     - we execute the closure in a global critical section (interrupt free)
 ///     - CS entry cost, single write to core register
 ///     - CS exit cost, single write to core register
@@ -292,7 +294,7 @@ pub unsafe fn lock<T, R, const M: usize>(
     ptr: *mut T,
     priority: &Priority,
     ceiling: u8,
-    _nvic_prio_bits: u8,
+    _clic_prio_bits: u8,
     masks: &[Mask<M>; 3],
     f: impl FnOnce(&mut T) -> R,
 ) -> R {
@@ -302,7 +304,7 @@ pub unsafe fn lock<T, R, const M: usize>(
             // safe to manipulate outside critical section
             priority.set(ceiling);
             // execute closure under protection of raised system ceiling
-            let r = interrupt::free(|_| f(&mut *ptr));
+            let r = interrupt::free(|| f(&mut *ptr));
             // safe to manipulate outside critical section
             priority.set(current);
             r
@@ -363,8 +365,9 @@ unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
 
 #[inline]
 #[must_use]
-pub fn logical2hw(logical: u8, nvic_prio_bits: u8) -> u8 {
-    ((1 << nvic_prio_bits) - logical) << (8 - nvic_prio_bits)
+pub fn logical2hw(logical: u8, _clic_prio_bits: u8) -> u8 {
+    // for RISC-V, 0 is the lowest priority and 255 the hightest
+    logical
 }
 
 #[cfg(have_basepri)]

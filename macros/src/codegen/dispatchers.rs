@@ -108,7 +108,7 @@ pub fn codegen(app: &App, analysis: &Analysis, _extra: &Extra) -> Vec<TokenStrea
         items.push(quote!(
             #[allow(non_snake_case)]
             #[doc = #doc]
-            #[no_mangle]
+            #[interrupt_handler(#interrupt)]
             #(#attribute)*
             unsafe fn #interrupt() {
                 /// The priority of this interrupt handler
