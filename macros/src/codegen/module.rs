@@ -276,7 +276,7 @@ pub fn codegen(
             } else {
                 let rt_err = util::rt_err_ident();
                 (
-                    quote!(rtic::export::NVIC::unmask(#rt_err::#enum_::#m_isr)),
+                    quote!(rtic::export::CLIC::unmask(#rt_err::#enum_::#m_isr)),
                     quote!(rtic::pend(#rt_err::#enum_::#m_isr)),
                 )
             };

@@ -231,7 +231,6 @@ pub unsafe fn lock<T, R, const M: usize>(
             priority.set(current);
             r
         } else {
-            // TODO: fix interrupt priorities
             priority.set(ceiling);
             mintthresh::write(mintthresh::Mintthresh::new(logical2hw(ceiling, clic_prio_bits).into()));
             let r = f(&mut *ptr);

@@ -147,14 +147,14 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
         } else {
             stmts.push(quote!(
-                core.NVIC.set_priority(
+                core.CLIC.set_priority(
                     #rt_err::#interrupt::#binds,
                     rtic::export::logical2hw(#priority, #clic_prio_bits),
                 );
 
                 // Always enable monotonic interrupts if they should never be off
                 if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
-                    rtic::export::NVIC::unmask(#rt_err::#interrupt::#binds);
+                    rtic::export::CLIC::unmask(#rt_err::#interrupt::#binds);
                 }
             ));
         }
