@@ -365,9 +365,9 @@ unsafe fn clear_enable_mask<const M: usize>(mask: Mask<M>) {
 
 #[inline]
 #[must_use]
-pub fn logical2hw(logical: u8, _clic_prio_bits: u8) -> u8 {
+pub fn logical2hw(logical: u8, clic_prio_bits: u8) -> u8 {
     // for RISC-V, 0 is the lowest priority and 255 the hightest
-    logical
+    logical << (8-clic_prio_bits)
 }
 
 #[cfg(have_basepri)]
