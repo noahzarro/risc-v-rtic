@@ -152,6 +152,15 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
                     rtic::export::logical2hw(#priority, #clic_prio_bits),
                 );
 
+                // Enable hardware enabled vectoring
+                core.CLIC.enable_shv(#rt_err::#interrupt::#binds);
+
+                // Set trigger to edge positive
+                core.CLIC.set_trig(
+                    #rt_err::#interrupt::#binds,
+                    rtic::export::peripheral::clic::Trigger::EdgePositive,
+                );
+
                 // Always enable monotonic interrupts if they should never be off
                 if !<#mono_type as rtic::Monotonic>::DISABLE_INTERRUPT_ON_EMPTY_QUEUE {
                     rtic::export::CLIC::unmask(#rt_err::#interrupt::#binds);
