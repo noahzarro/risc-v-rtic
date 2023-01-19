@@ -63,7 +63,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () =  if (1 << #clic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+            const _: () =  if (1 << #clic_prio_bits)-1 < #priority as usize { ::core::panic!(#es); };
         ));
 
         // Set priority
@@ -102,7 +102,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         );
         // Compile time assert that this priority is supported by the device
         stmts.push(quote!(
-            const _: () =  if (1 << #clic_prio_bits) < #priority as usize { ::core::panic!(#es); };
+            const _: () =  if (1 << #clic_prio_bits)-1 < #priority as usize { ::core::panic!(#es); };
         ));
 
         stmts.push(quote!(core.SCB.set_priority(
@@ -116,7 +116,7 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
         let priority = if let Some(prio) = monotonic.args.priority {
             quote! { #prio }
         } else {
-            quote! { (1 << #clic_prio_bits) }
+            quote! { (((1_u32 << #clic_prio_bits)-1) as u8)}
         };
         let binds = &monotonic.args.binds;
 
