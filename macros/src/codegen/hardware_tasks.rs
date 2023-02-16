@@ -37,6 +37,7 @@ pub fn codegen(
         mod_app.push(quote!(
             #[allow(non_snake_case)]
             #[no_mangle]
+            #[interrupt_handler(#symbol)]
             #(#attrs)*
             #(#cfgs)*
             unsafe fn #symbol() {

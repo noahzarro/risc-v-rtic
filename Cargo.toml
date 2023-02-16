@@ -73,3 +73,6 @@ overflow-checks = false
 
 [patch.crates-io]
 lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }
+
+[features]
+nxti = ["riscv-rt/nxti", "riscv-rt-macros/nxti"]
