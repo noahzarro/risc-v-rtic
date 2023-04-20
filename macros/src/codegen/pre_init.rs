@@ -68,15 +68,18 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
 
         // Set priority
         stmts.push(quote!(
+            // Set priority
             core.CLIC.set_priority(
                 #rt_err::#interrupt::#name,
                 rtic::export::logical2hw(#priority, #clic_prio_bits),
             );
         ));
 
-        // Enable hardware enabled vectoring
-        if cfg!(feature="nxti"){
-            stmts.push(quote!(core.CLIC.enable_shv(#rt_err::#interrupt::#name);));
+        // Enable hardware enabled vectoring (only needed if nxti is not active)
+        if !cfg!(feature="nxti") {
+            stmts.push(quote!(
+                core.CLIC.enable_shv(#rt_err::#interrupt::#name);
+            ));
         }
 
         // Set trigger to edge positive
@@ -149,9 +152,9 @@ pub fn codegen(app: &App, analysis: &Analysis, extra: &Extra) -> Vec<TokenStream
             ));
         } else {
 
-            if cfg!(feature="nxti"){
+            // Enable hardware enabled vectoring if nxti feature is not active
+            if !cfg!(feature="nxti") {
                 stmts.push(quote!(
-                    // Enable hardware enabled vectoring
                     core.CLIC.enable_shv(#rt_err::#interrupt::#binds);
                 ))
             }

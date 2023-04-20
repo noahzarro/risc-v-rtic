@@ -26,3 +26,4 @@ rtic-syntax = "1.0.2"
 
 [features]
 debugprint = []
+nxti = []

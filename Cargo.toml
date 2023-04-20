@@ -27,8 +27,8 @@ rtic-core = "1.0.0"
 heapless = "0.7.7"
 bare-metal = "1.0.0"
 riscv-clic = { git = "https://github.com/noahzarro/riscv-clic.git", features=["critical-section-single-hart", "clic"]}
-riscv-rt = { git = "https://github.com/noahzarro/riscv-rt", branch = "pulp", features=["clic"]}
-riscv-rt-macros = { git = "https://github.com/noahzarro/riscv-rt", branch = "pulp" }
+riscv-rt = { path = "/scratch/msc22h12/working-repos/riscv-rt", features=["clic"]}
+riscv-rt-macros = { path = "/scratch/msc22h12/working-repos/riscv-rt/macros" }
 
 [build-dependencies]
 version_check = "0.9"
@@ -75,4 +75,4 @@ overflow-checks = false
 lm3s6965 = { git = "https://github.com/japaric/lm3s6965" }
 
 [features]
-nxti = ["riscv-rt/nxti", "riscv-rt-macros/nxti"]
+nxti = ["riscv-rt/nxti", "riscv-rt-macros/nxti", "cortex-m-rtic-macros/nxti"]
