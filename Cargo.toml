@@ -27,8 +27,8 @@ rtic-core = "1.0.0"
 heapless = "0.7.7"
 bare-metal = "1.0.0"
 riscv-clic = { git = "https://github.com/noahzarro/riscv-clic.git", features=["critical-section-single-hart", "clic"]}
-riscv-rt = { path = "/scratch/msc22h12/working-repos/riscv-rt", features=["clic"]}
-riscv-rt-macros = { path = "/scratch/msc22h12/working-repos/riscv-rt/macros" }
+riscv-rt = { git = "https://github.com/noahzarro/riscv-rt.git", features=["clic"] }
+riscv-rt-macros = { git = "https://github.com/noahzarro/riscv-rt.git" }
 
 [build-dependencies]
 version_check = "0.9"
